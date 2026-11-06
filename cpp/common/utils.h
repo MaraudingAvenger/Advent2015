@@ -180,7 +180,7 @@ std::filesystem::path getInputFilePath(const std::filesystem::path& inputFile) {
     }
 }
 
-std::vector<std::string> readLinesFromFile(const std::filesystem::path& filePath) {
+std::vector<std::string> readFileToLines(const std::filesystem::path& filePath) {
 	std::ifstream file(filePath);
 	if (!file.is_open()) {
 		return {};

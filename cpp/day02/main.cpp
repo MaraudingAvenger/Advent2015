@@ -22,7 +22,7 @@ int ribbonLength(int l, int w, int h) {
 }
 
 int main() {
-    auto lines = utils::readLinesFromFile(utils::getInputFilePath("inputs/day02.txt"));
+    auto lines = utils::readFileToLines(utils::getInputFilePath("inputs/day02.txt"));
 
     auto parseLine = [](std::string_view sv) -> std::tuple<int, int, int> {
         int l, w, h;
