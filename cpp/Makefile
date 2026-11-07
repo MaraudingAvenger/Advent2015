@@ -4,7 +4,7 @@ LDFLAGS := -lssl -lcrypto # this is not actually used anywhere
 
 # On MinGW (e.g. MSYS2 UCRT64), std::print's terminal support lives in libstdc++exp.
 ifeq ($(OS),Windows_NT)
-LDFLAGS += -lstdc++exp -lssl -lcrypto
+LDFLAGS += -lstdc++exp #-lssl -lcrypto
 endif
 
 DAY_DIRS := $(sort $(shell find . -mindepth 1 -maxdepth 1 -type d -name 'day*' -printf '%f\n'))

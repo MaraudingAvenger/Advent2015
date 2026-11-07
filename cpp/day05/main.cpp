@@ -28,13 +28,35 @@ bool hasDoubleLetter(std::string_view s) {
     });
 }
 
-bool isNice(std::string_view s) {
+bool partOneIsNice(std::string_view s) {
     return hasNoForbiddenPairs(s) && hasThreeVowels(s) && hasDoubleLetter(s);
+}
+
+// must contain a pair of any two letters that appears at least twice without overlapping
+// Iterates by index rather than over windows because the search for a repeat has to start
+// after the pair itself; starting any earlier lets a pair match itself or overlap ("aaa").
+bool hasRepeatedPair(std::string_view s) {
+    const std::size_t pairCount = s.size() < 2 ? 0 : s.size() - 1;
+    return std::ranges::any_of(std::views::iota(0uz, pairCount), [s](std::size_t i) {
+        return s.substr(i + 2).contains(s.substr(i, 2));
+    });
+}
+
+// must contain two of the same letter with exactly one letter between them
+bool hasRepeatedLetterWithOneBetween(std::string_view s) {
+    return std::ranges::any_of(s | std::views::slide(3), [](auto window) {
+        return window[0] == window[2];
+    });
+}
+
+bool partTwoIsNice(std::string_view s) {
+    return hasRepeatedPair(s) && hasRepeatedLetterWithOneBetween(s);
 }
 
 }
 
 int main() {
     const auto lines = utils::readFileToLines(utils::getInputFilePath("inputs/day05.txt"));
-    std::println("part 1: {}", std::ranges::count_if(lines, isNice));
+    std::println("part 1: {}", std::ranges::count_if(lines, partOneIsNice));
+    std::println("part 2: {}", std::ranges::count_if(lines, partTwoIsNice));
 }
