@@ -1,42 +1,41 @@
 #include <print>
-#include <set>
 #include <ranges>
-#include <utility>
+#include <unordered_set>
 
 #include "../common/utils.h"
 
 namespace {
-constexpr std::pair<int, int> move(char c) {
-    int dx = 0, dy = 0;
+
+constexpr utils::Point move(char c) {
     switch (c) {
-        case '^': dy = 1; break;
-        case 'v': dy = -1; break;
-        case '>': dx = 1; break;
-        case '<': dx = -1; break;
-        default: break;
+        case '^': return utils::Up;
+        case 'v': return utils::Down;
+        case '>': return utils::Right;
+        case '<': return utils::Left;
+        default:  return {};  // trailing newline or other noise: stay put
     }
-    return {dx, dy};
 }
 
-std::set<std::pair<int, int>> visit(std::string_view line, std::ptrdiff_t step) {
-    std::set<std::pair<int, int>> visited;
-    std::pair current{0, 0};
-    visited.insert(current);
-    for (char c : line | std::views::stride(step)) {
-        current.first += move(c).first;
-        current.second += move(c).second;
+// Takes any range of moves so part 2 can hand each deliverer its own strided slice.
+std::unordered_set<utils::Point> visit(std::ranges::input_range auto&& moves) {
+    utils::Point current;
+    std::unordered_set<utils::Point> visited{current};
+    for (const char c : moves) {
+        current += move(c);
         visited.insert(current);
     }
     return visited;
 }
+
 }  // namespace
 
 int main() {
-    auto line = utils::readFileToString(utils::getInputFilePath("inputs/day03.txt"));
+    const auto line = utils::readFileToString(utils::getInputFilePath("inputs/day03.txt"));
 
-    auto part1 = visit(line, 1);
-    std::println("part 1: {}", part1.size());
+    std::println("part 1: {}", visit(line).size());
 
-    auto part2 = visit(line, 2);
-    std::println("part 2: {}", part2.size());
+    // Santa takes the even moves and Robo-Santa the odd ones; a house counts if either visits.
+    auto houses = visit(line | std::views::stride(2));
+    houses.merge(visit(line | std::views::drop(1) | std::views::stride(2)));
+    std::println("part 2: {}", houses.size());
 }

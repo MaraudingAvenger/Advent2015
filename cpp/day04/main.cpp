@@ -182,8 +182,8 @@ Answers search(std::string_view key) {
 }  // namespace
 
 int main() {
-    const auto key = utils::trim(utils::readFileToString(utils::getInputFilePath("inputs/day04.txt")));
-    const auto [part1, part2] = search(key);
+    const auto input = utils::readFileToString(utils::getInputFilePath("inputs/day04.txt"));
+    const auto [part1, part2] = search(utils::trim(input));
     std::println("part 1: {}", part1);
     std::println("part 2: {}", part2);
 }

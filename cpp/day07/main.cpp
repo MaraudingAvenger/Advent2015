@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
-#include <charconv>
 #include <cstdint>
 #include <format>
 #include <optional>
@@ -35,20 +34,11 @@ struct Gate {
 using Circuit = std::unordered_map<std::string, Gate>;
 using Cache = std::unordered_map<std::string, std::uint16_t>;
 
-// Parsing straight into uint16_t makes an out-of-range literal an error instead of a silent wrap.
-std::uint16_t parseSignal(std::string_view s) {
-    std::uint16_t value{};
-    const auto [ptr, ec] = std::from_chars(s.data(), s.data() + s.size(), value);
-    if (ec != std::errc{} || ptr != s.data() + s.size()) {
-        throw std::invalid_argument(std::format("invalid signal: '{}'", s));
-    }
-    return value;
-}
-
 // Wire names are all lowercase letters, so a leading digit is enough to tell them apart.
+// Parsing straight into uint16_t makes an out-of-range literal an error instead of a silent wrap.
 Operand parseOperand(std::string_view s) {
     if (!s.empty() && std::isdigit(static_cast<unsigned char>(s.front()))) {
-        return parseSignal(s);
+        return utils::parseInt<std::uint16_t>(s);
     }
     return std::string{s};
 }
@@ -76,8 +66,8 @@ std::pair<std::string, Gate> parseLine(std::string_view line) {
         throw std::invalid_argument(std::format("malformed line: '{}'", line));
     }
 
-    std::string target = tokens.back();
-    const std::span<const std::string> expr(tokens.data(), tokens.size() - 2);
+    std::string target{tokens.back()};
+    const std::span<const std::string_view> expr(tokens.data(), tokens.size() - 2);
 
     switch (expr.size()) {
         case 1:
