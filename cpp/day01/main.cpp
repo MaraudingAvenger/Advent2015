@@ -1,22 +1,42 @@
+#include <algorithm>
+#include <cstddef>
+#include <functional>
 #include <print>
-#include <numeric>
 #include <ranges>
-#include <vector>
+#include <stdexcept>
+#include <string_view>
 
 #include "../common/utils.h"
 
-int main() {
-    auto line = utils::readFileToString(utils::getInputFilePath("inputs/day01.txt"));
+namespace {
 
-    auto part1 = std::ranges::count(line, '(') - std::ranges::count(line, ')');
-    std::println("part 1: {}", part1);
-
-    auto floors = std::vector<int>{};
-    int floor = 0;
-    for (char c : line) {
-        floor += (c == '(') ? 1 : (c == ')') ? -1 : 0;
-        floors.push_back(floor);
+constexpr int step(char c) {
+    switch (c) {
+        case '(': return 1;
+        case ')': return -1;
+        default:  return 0;
     }
-    auto it = std::ranges::find(floors, -1);
-    std::println("part 2: {}", std::distance(floors.begin(), it) + 1);
+}
+
+// 1-based position of the first move that takes Santa to floor -1.
+// C++23 has no lazy running-sum view (no views::scan / inclusive_scan view), so this stays a
+// loop; enumerate supplies the position alongside each character.
+std::ptrdiff_t firstBasementPosition(std::string_view moves) {
+    int floor = 0;
+    for (const auto [i, c] : moves | std::views::enumerate) {
+        floor += step(c);
+        if (floor == -1) {
+            return i + 1;
+        }
+    }
+    throw std::runtime_error("Santa never reaches the basement");
+}
+
+}  // namespace
+
+int main() {
+    const auto moves = utils::readFileToString(utils::getInputFilePath("inputs/day01.txt"));
+
+    std::println("part 1: {}", std::ranges::fold_left(moves | std::views::transform(step), 0, std::plus{}));
+    std::println("part 2: {}", firstBasementPosition(moves));
 }

@@ -1,42 +1,44 @@
+#include <functional>
 #include <print>
+#include <ranges>
 #include <string>
+#include <string_view>
 
 #include "../common/utils.h"
 
+namespace {
+
+// "1211" -> runs {1}{2}{11} -> "one 1, one 2, two 1s" -> "111221".
+// chunk_by with equal_to splits the string into runs of identical digits, which is exactly
+// the grouping look-and-say describes.
+std::string lookAndSay(std::string_view digits) {
+    std::string result;
+    result.reserve(digits.size() * 2);  // the sequence grows ~30% per step, so this rarely reallocates
+    for (const auto run : digits | std::views::chunk_by(std::ranges::equal_to{})) {
+        // Not std::format_to(back_inserter(result), ...): this runs millions of times, and
+        // pushing through a back_inserter one char at a time made the whole day ~4x slower.
+        result += std::to_string(run.size());
+        result += run.front();
+    }
+    return result;
+}
+
+std::string lookAndSay(std::string digits, int times) {
+    for (int i = 0; i < times; ++i) {
+        digits = lookAndSay(digits);
+    }
+    return digits;
+}
+
+}  // namespace
+
 int main() {
-    auto text = utils::readFileToString(utils::getInputFilePath("inputs/day10.txt"));
+    const auto input = utils::readFileToString(utils::getInputFilePath("inputs/day10.txt"));
 
-    // generate a look-and-say sequence based on the input text
-    auto lookAndSay = [](const std::string& input) {
-        std::string result;
-        for (size_t i = 0; i < input.size(); ) {
-            char c = input[i];
-            size_t count = 0;
-            while (i < input.size() && input[i] == c) {
-                ++count;
-                ++i;
-            }
-            result += std::to_string(count) + c;
-        }
-        return result;
-    };
+    // Trimmed so a trailing newline can't become part of the sequence.
+    const auto after40 = lookAndSay(std::string{utils::trim(input)}, 40);
+    std::println("part 1: {}", after40.size());
 
-    std::string result = text;
-
-    // apply the look-and-say sequence 40 times
-    for (int i = 0; i < 40; ++i) {
-        result = lookAndSay(result);
-    }
-
-    // print the length of the resulting sequence
-    std::println("part 1: {}", result.size());
-
-    // apply the look-and-say sequence 50 times for part 2
-    for (int i = 0; i < 10; ++i) {
-        result = lookAndSay(result);
-    }
-
-    std::println("part 2: {}", result.size());
-
-    return 0;
+    const auto after50 = lookAndSay(after40, 10);
+    std::println("part 2: {}", after50.size());
 }

@@ -1,5 +1,8 @@
+#include <algorithm>
 #include <format>
+#include <functional>
 #include <print>
+#include <ranges>
 #include <stdexcept>
 #include <string_view>
 
@@ -11,6 +14,7 @@ namespace {
 //   \"   -> 1 char (double quote)
 //   \\   -> 1 char (backslash)
 //   \xAB -> 1 char (hex code)
+// A plain index loop because each escape consumes a different number of characters.
 std::size_t decodedLength(std::string_view literal) {
     if (literal.size() < 2 || !literal.starts_with('"') || !literal.ends_with('"')) {
         throw std::invalid_argument(std::format("not a quoted literal: {}", literal));
@@ -30,17 +34,10 @@ std::size_t decodedLength(std::string_view literal) {
     return length;
 }
 
-// The only chars that trigger are double quotes and backslashes when encoding.
+// Encoding adds surrounding quotes, and a backslash in front of every quote or backslash.
 std::size_t encodedLength(std::string_view literal) {
-    std::size_t length = 2;  // account for the surrounding quotes
-    for (char c : literal) {
-        if (c == '"' || c == '\\') {
-            length += 2;
-        } else {
-            length += 1;
-        }
-    }
-    return length;
+    const auto needsEscape = std::ranges::count_if(literal, [](char c) { return c == '"' || c == '\\'; });
+    return literal.size() + static_cast<std::size_t>(needsEscape) + 2;
 }
 
 }  // namespace
@@ -48,15 +45,12 @@ std::size_t encodedLength(std::string_view literal) {
 int main() {
     const auto lines = utils::readFileToLines(utils::getInputFilePath("inputs/day08.txt"));
 
-    std::size_t totalDifference = 0;
-    for (const auto& line : lines) {
-        totalDifference += line.size() - decodedLength(line);
-    }
-    std::println("part 1: {}", totalDifference);
+    // fold_left's result type follows the initial value, so 0uz keeps the sums in size_t.
+    const auto codeMinusMemory = lines
+        | std::views::transform([](std::string_view s) { return s.size() - decodedLength(s); });
+    std::println("part 1: {}", std::ranges::fold_left(codeMinusMemory, 0uz, std::plus{}));
 
-    totalDifference = 0;
-    for (const auto& line : lines) {
-        totalDifference += encodedLength(line) - line.size();
-    }
-    std::println("part 2: {}", totalDifference);
+    const auto encodedMinusCode = lines
+        | std::views::transform([](std::string_view s) { return encodedLength(s) - s.size(); });
+    std::println("part 2: {}", std::ranges::fold_left(encodedMinusCode, 0uz, std::plus{}));
 }

@@ -57,24 +57,23 @@ int main() {
 
     // Visiting every city once is a travelling-salesman problem, which has no efficient exact
     // algorithm; but with 8 cities there are only 8! = 40320 orders, so trying them all is instant.
+    // Both parts score the same routes, so one pass over the permutations tracks both extremes.
+    // (There is no permutations view in C++23, so next_permutation drives a plain loop.)
+    const auto routeLength = [&](const std::vector<int>& route) {
+        return std::ranges::fold_left(
+            route | std::views::pairwise_transform([&](int a, int b) { return distance[a, b]; }),
+            0, std::plus{});
+    };
+
     auto route = std::views::iota(0, cityCount) | std::ranges::to<std::vector>();
     int shortest = std::numeric_limits<int>::max();
-    do {
-        const int length = std::ranges::fold_left(
-            route | std::views::pairwise_transform([&](int a, int b) { return distance[a, b]; }),
-            0, std::plus{});
-        shortest = std::min(shortest, length);
-    } while (std::ranges::next_permutation(route).found);
-
-    std::println("part 1: {}", shortest);
-
     int longest = std::numeric_limits<int>::min();
     do {
-        const int length = std::ranges::fold_left(
-            route | std::views::pairwise_transform([&](int a, int b) { return distance[a, b]; }),
-            0, std::plus{});
+        const int length = routeLength(route);
+        shortest = std::min(shortest, length);
         longest = std::max(longest, length);
     } while (std::ranges::next_permutation(route).found);
 
+    std::println("part 1: {}", shortest);
     std::println("part 2: {}", longest);
 }

@@ -1,25 +1,23 @@
+#include <algorithm>
+#include <functional>
 #include <print>
-#include <string>
-#include <array>
 #include <ranges>
+#include <string>
+#include <string_view>
 
 #include "../common/utils.h"
 
-
+namespace {
 
 bool hasNoForbiddenChars(std::string_view s) {
-    static constexpr std::array<std::string_view, 3> forbidden{"i", "o", "l"};
-    return std::ranges::none_of(forbidden, [s](std::string_view pair) { return s.contains(pair); });
+    return s.find_first_of("iol") == std::string_view::npos;
 }
 
 bool hasIncreasingStraight(std::string_view s) {
-    return std::ranges::any_of(
-        s | std::views::adjacent<3>,
-        [](auto triple) {
-            auto [a, b, c] = triple;
-            return b == a + 1 && c == b + 1;
-        }
-    );
+    return std::ranges::any_of(s | std::views::adjacent<3>, [](auto triple) {
+        auto [a, b, c] = triple;
+        return b == a + 1 && c == b + 1;
+    });
 }
 
 bool hasTwoNonOverlappingPairs(std::string_view s) {
@@ -32,34 +30,36 @@ bool hasTwoNonOverlappingPairs(std::string_view s) {
     return std::ranges::adjacent_find(pairLetters, std::ranges::not_equal_to{}) != pairLetters.end();
 }
 
-bool isValidPasswordPart1(std::string_view s) {
+bool isValidPassword(std::string_view s) {
     return hasNoForbiddenChars(s) && hasIncreasingStraight(s) && hasTwoNonOverlappingPairs(s);
 }
 
-std::string nextPassword(std::string s) {
-    for (int i = s.size() - 1; i >= 0; --i) {
-        if (s[i] == 'z') {
-            s[i] = 'a';
-        } else {
-            ++s[i];
-            break;
+// Counts up in base 26 like an odometer: walk from the rightmost letter, turning each 'z' into
+// 'a' (carry) until a letter can simply be bumped.
+void increment(std::string& password) {
+    for (char& c : password | std::views::reverse) {
+        if (c != 'z') {
+            ++c;
+            return;
         }
+        c = 'a';
     }
-    return s;
 }
 
+// do/while rather than while: the answer is the next valid password, never the current one.
+std::string nextValidPassword(std::string password) {
+    do {
+        increment(password);
+    } while (!isValidPassword(password));
+    return password;
+}
+
+}  // namespace
+
 int main() {
-    auto text = utils::readFileToString(utils::getInputFilePath("inputs/day11.txt"));
+    const auto input = utils::readFileToString(utils::getInputFilePath("inputs/day11.txt"));
 
-    std::string password = text;
-    while (!isValidPasswordPart1(password)) {
-        password = nextPassword(password);
-    }
-    std::println("part 1: {}", password);
-
-    password = nextPassword(password);
-    while (!isValidPasswordPart1(password)) {
-        password = nextPassword(password);
-    }
-    std::println("part 2: {}", password);
+    const auto part1 = nextValidPassword(std::string{utils::trim(input)});
+    std::println("part 1: {}", part1);
+    std::println("part 2: {}", nextValidPassword(part1));
 }
