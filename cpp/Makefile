@@ -35,7 +35,7 @@ new:
 		exit 1; \
 	fi; \
 	mkdir -p "$$name"; \
-	printf '#include "../common/utils.h"\n\nint main() {\n\n}\n' > "$$name/main.cpp"; \
+	printf '#include <print>\n\n#include "../common/utils.h"\n\nint main() {\n\n}\n' > "$$name/main.cpp"; \
 	echo "Created $$name/main.cpp"
 
 # Build discovered day* folders for `make all`.

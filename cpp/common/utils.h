@@ -238,7 +238,10 @@ public:
     // Builds a grid from input lines, converting each character with `convert`:
     //   auto chars  = Grid<char>::fromLines(lines);
     //   auto digits = Grid<int>::fromLines(lines, [](char c) { return c - '0'; });
-    template <std::ranges::input_range Lines, typename Convert = std::identity>
+    // forward_range because we traverse `lines` more than once (distance, first row, fill);
+    // checked on `const Lines` since that's what we actually iterate.
+    template <typename Lines, typename Convert = std::identity>
+        requires std::ranges::forward_range<const Lines>
     static Grid fromLines(const Lines& lines, Convert convert = {}) {
         const int height = static_cast<int>(std::ranges::distance(lines));
         const int width = height == 0 ? 0 : static_cast<int>(std::string_view(*std::ranges::begin(lines)).size());
