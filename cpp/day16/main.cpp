@@ -51,8 +51,6 @@ static_assert(compoundIndex("trees") == 7);  // evaluated at compile time
 
 struct Sue {
     int number;
-    // One slot per Tape entry; nullopt means you don't remember that compound for this Sue,
-    // which is different from remembering a count of 0.
     std::array<std::optional<int>, Tape.size()> compounds;
 };
 
@@ -92,7 +90,6 @@ int findSue(std::span<const Sue> sues, auto agrees) {
         | std::views::transform(&Sue::number)
         | std::ranges::to<std::vector>();
     if (found.size() != 1) {
-        // C++23 can format a whole range: this prints e.g. "[40, 213]".
         throw std::runtime_error(std::format("expected exactly one matching Sue, found {}", found));
     }
     return found.front();
